@@ -1,16 +1,32 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int main()
+//argc = argument count, an integer representing the toal number of items on the command line, including the name
+//of the program itself
+
+//argv = argument vector, an array of strings containing those actual items
+int main(int argc, char * argv[])
 {
+	if(argc >2) return 0; // basically if the argument count is less than 2 , exit the program
 
 	//malloc something
+	//atoi is ASCII to integer
+	/*
+	int num_allocs = atoi(argv[1]);
+	
+	//Just to produce a general leak
+	for(int i = 0; num_allocs >i; i++)
+	{
+		void* prtr = malloc(64);
+	}
+	*/
 	
 	void *a = malloc(128);
 	void *b = malloc(64);
 	void *c = calloc(1, sizeof(b));
 	free(a);
 	//free(b);
+	
 	
 	
 	return 0;

@@ -4,6 +4,39 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#define MAX_NODES 10000
+
+
+
+//Setting up linked list data structure
+typedef struct node {
+	void *ptr; //pointer to address
+	size_t size;
+	struct node *next;
+	
+}node_t;
+
+//static node_t pool[MAX_NODES];
+//static int node_ptr = 0;
+//static node_t *head = NULL;
+
+//Initializes list before run time? I think thats how constructor works
+__attribute__((constructor)) static void init_list(void)
+{
+	//void *(* original_malloc)(size_t size) = dlsym(RTLD_NEXT,"malloc");
+	original_malloc = dlsym(RTLD_NEXT,"malloc");
+	original_free = dlsym(RTDL_NEXT, "free");
+	original_calloc = dlsym(RTLD_NEXT,"calloc");
+	original_realloc = dlsym(RTLD_NEXT,"realloc");
+	
+	
+	//set up linked list
+	//head = (node_t*)original_malloc(sizeof(node_t));
+	node_t *head = NULL;
+	
+}
+
+
 //shim file deals with actual memory allocation and memory leaks
 //a memory leak is defined as a call to malloc, callod or ralloc that returns a pointer that is never
 //freed during the course of the programs execution (via free or realloc)
@@ -16,15 +49,36 @@ void free (void *ptr)
 	
 	//original_free(ptr);
 	
-	//write(2,"free found\n",12);
+	write(2,"free found\n",12);
 }
+
 
 void *malloc(size_t size)
 {
-	void *(* original_malloc)(size_t size) = dlsym(RTLD_NEXT,"malloc");
+	//void *(* original_malloc)(size_t size) = dlsym(RTLD_NEXT,"malloc");
 	void *ptr = original_malloc(size);
+	node_t *newNode = (node_t*)original_malloc(sizeof(node_t));
+	node_t *curr = head; //helps us locate where the new node needs to go
+	node_t *prev = curr;
+	newNode->ptr = ptr;
+	newNode->size = size;
+	while(curr != NULL) // walk through linked list, curr finds the end, prev is the point where we insert next
+	{
+		prev = curr;
+		curr = curr->next;
+	}
+	prev->next = newNode;
+	newNode->next = NULL;
+	
+	
+	malloc_count++;
+	
 	
 	write(2,"malloc found\n",14);
+	
+	
+	
+	return ptr;
 
 }
 
@@ -37,7 +91,7 @@ void *malloc(size_t size)
 			   */
 void *calloc(size_t count, size_t size)
 {
-	void *(*original_calloc)(size_t count, size_t size) = dlsym(RTLD_NEXT,"calloc");
+	//void *(*original_calloc)(size_t count, size_t size) = dlsym(RTLD_NEXT,"calloc");
 	void *ptr = original_calloc(count,size);
 	
 	write(2,"calloc found\n",14);
