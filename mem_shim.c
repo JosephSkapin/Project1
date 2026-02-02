@@ -18,21 +18,25 @@ typedef struct node {
 
 //static node_t pool[MAX_NODES];
 //static int node_ptr = 0;
-//static node_t *head = NULL;
+static node_t *head = NULL;
+static void *(*original_malloc)(size_t size) = NULL;
+static void  (*original_free)(void *) = NULL;
+static void *(*original_calloc)(size_t, size_t) = NULL;
+static void *(*original_realloc)(void *, size_t) = NULL;
 
 //Initializes list before run time? I think thats how constructor works
 __attribute__((constructor)) static void init_list(void)
 {
 	//void *(* original_malloc)(size_t size) = dlsym(RTLD_NEXT,"malloc");
 	original_malloc = dlsym(RTLD_NEXT,"malloc");
-	original_free = dlsym(RTDL_NEXT, "free");
+	original_free = dlsym(RTLD_NEXT, "free");
 	original_calloc = dlsym(RTLD_NEXT,"calloc");
 	original_realloc = dlsym(RTLD_NEXT,"realloc");
 	
 	
 	//set up linked list
 	//head = (node_t*)original_malloc(sizeof(node_t));
-	node_t *head = NULL;
+	//node_t *head = NULL;
 	
 }
 
@@ -57,21 +61,33 @@ void *malloc(size_t size)
 {
 	//void *(* original_malloc)(size_t size) = dlsym(RTLD_NEXT,"malloc");
 	void *ptr = original_malloc(size);
+	if(ptr == NULL) return NULL;
+	
 	node_t *newNode = (node_t*)original_malloc(sizeof(node_t));
-	node_t *curr = head; //helps us locate where the new node needs to go
-	node_t *prev = curr;
 	newNode->ptr = ptr;
 	newNode->size = size;
-	while(curr != NULL) // walk through linked list, curr finds the end, prev is the point where we insert next
+	
+	if(head != NULL)
 	{
-		prev = curr;
-		curr = curr->next;
+		node_t *curr = head; 
+		node_t *prev = curr;
+		while(curr != NULL) // walk through linked list, curr finds the end, prev is the point where we insert next
+		{
+			prev = curr;
+			curr = curr->next;
+		}
+	
+		prev->next = newNode;
+	
+		newNode->next = NULL;
+		write(2,"Node Added\n",12);
 	}
-	prev->next = newNode;
-	newNode->next = NULL;
+	else //Case for empty list
+	{
+		head = newNode;
+		write(2,"First Node Added\n",17);
+	}
 	
-	
-	malloc_count++;
 	
 	
 	write(2,"malloc found\n",14);
@@ -117,13 +133,5 @@ void *realloc(void *ptr, size_t size)
 //original_malloc = dlsym(RTLD_NEXT, "malloc");
 //void *ptr = original_malloc(17);
 /*
-int main()
-{
-	
-	void *(*original_malloc) (size_t size);
-	original_malloc = dlsym(RTLD_NEXT,"malloc");
-	void *ptr = original_malloc(17);
-	
-	printf("LEAK %p",ptr);
-}
+
 */

@@ -23,8 +23,8 @@ int main(int argc, char * argv[])
 	
 	void *a = malloc(128);
 	void *b = malloc(64);
-	void *c = calloc(1, sizeof(b));
-	free(a);
+	//void *c = calloc(1, sizeof(b));
+	//free(a);
 	//free(b);
 	
 	
