@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#define MAX_NODES 10000
+
 
 
 
@@ -16,13 +16,13 @@ typedef struct node {
 	
 }node_t;
 
-//static node_t pool[MAX_NODES];
-//static int node_ptr = 0;
+
 static node_t *head = NULL;
-static void *(*original_malloc)(size_t size) = NULL;
-static void  (*original_free)(void *) = NULL;
-static void *(*original_calloc)(size_t, size_t) = NULL;
-static void *(*original_realloc)(void *, size_t) = NULL;
+
+void *(*original_malloc)(size_t size);
+void  (*original_free)(void *);
+void *(*original_calloc)(size_t, size_t);
+void *(*original_realloc)(void *, size_t);
 
 //Initializes list before run time? I think thats how constructor works
 __attribute__((constructor)) static void init_list(void)
