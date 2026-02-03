@@ -18,40 +18,34 @@ typedef struct node {
 
 
 static node_t *head = NULL;
-
+//Function prototypes to implement
 void *(*original_malloc)(size_t size);
 void  (*original_free)(void *);
 void *(*original_calloc)(size_t, size_t);
 void *(*original_realloc)(void *, size_t);
 
-//Initializes list before run time? I think thats how constructor works
-__attribute__((constructor)) static void init_list(void)
+//Sets up links to lib.c respective functions
+__attribute__((constructor)) static void init(void)
 {
-	//void *(* original_malloc)(size_t size) = dlsym(RTLD_NEXT,"malloc");
+	
 	original_malloc = dlsym(RTLD_NEXT,"malloc");
 	original_free = dlsym(RTLD_NEXT, "free");
 	original_calloc = dlsym(RTLD_NEXT,"calloc");
 	original_realloc = dlsym(RTLD_NEXT,"realloc");
 	
-	
-	//set up linked list
-	//head = (node_t*)original_malloc(sizeof(node_t));
-	//node_t *head = NULL;
-	
 }
 
 
 //shim file deals with actual memory allocation and memory leaks
-//a memory leak is defined as a call to malloc, callod or ralloc that returns a pointer that is never
+//a memory leak is defined as a call to malloc, calloc or ralloc that returns a pointer that is never
 //freed during the course of the programs execution (via free or realloc)
 
 //implement these functions
 void free (void *ptr)
 {
-	//fix this
-	//void (*original_free)(void *ptr) = dlsym(RTLD_NEXT,"free");
 	
-	//original_free(ptr);
+	
+	original_free(ptr);
 	
 	write(2,"free found\n",12);
 }
@@ -59,7 +53,7 @@ void free (void *ptr)
 
 void *malloc(size_t size)
 {
-	//void *(* original_malloc)(size_t size) = dlsym(RTLD_NEXT,"malloc");
+	
 	void *ptr = original_malloc(size);
 	if(ptr == NULL) return NULL;
 	
@@ -71,7 +65,8 @@ void *malloc(size_t size)
 	{
 		node_t *curr = head; 
 		node_t *prev = curr;
-		while(curr != NULL) // walk through linked list, curr finds the end, prev is the point where we insert next
+		// walk through linked list, curr finds the end, prev is the point where we insert next
+		while(curr != NULL) 
 		{
 			prev = curr;
 			curr = curr->next;
@@ -99,31 +94,35 @@ void *malloc(size_t size)
 }
 
 //void return type
-			   /* Void pointers (void *) is a generic pointer,
-			   * when malloc returns it is handing you a raw starting address for a block of memory
-			   * without telling the compiler what kind of data will be stored there.
-			   * So basically we are using a void pointer here because we are tracking all types of 
-			   * memory allocation, same goes for calloc and realloc
-			   */
+/* Void pointers (void *) is a generic pointer,
+* when malloc returns it is handing you a raw starting address for a block of memory
+* without telling the compiler what kind of data will be stored there.
+* So basically we are using a void pointer here because we are tracking all types of 
+* memory allocation, same goes for calloc and realloc
+*
+*
+//Calloc takes 2 parameters, 1: the number of elements you want to allocate
+// 2. the size of each individual element in bytes	
+*/		   
 void *calloc(size_t count, size_t size)
 {
-	//void *(*original_calloc)(size_t count, size_t size) = dlsym(RTLD_NEXT,"calloc");
-	void *ptr = original_calloc(count,size);
+	
+	
 	
 	write(2,"calloc found\n",14);
 	
-}					 //Calloc takes 2 parameters, 1: the number of elements you want to allocate
-					// 2. the size of each individual element in bytes
-					
+}					 
+
+/*Realloc: First parameter Takes in a pointer to a memory block that needs to be 
+resized. This pointer must have previously been returned by malloc
+calloc or realloc.2nd parameter is the new size for the memory block in bytes
+The new size can be smaller or larger than the original.
+*/				
 void *realloc(void *ptr, size_t size)
 {
 	
 }
-					//Realloc: First parameter Takes in a pointer to a memory block that needs to be 
-					// resized. This pointer must have previously been returned by malloc
-					//calloc or realloc.
-					//2nd parameter is the new size for the memory block in bytes
-					//The new size can be smaller or larger than the original.
+					
 					
 			
 
@@ -132,6 +131,4 @@ void *realloc(void *ptr, size_t size)
 //void *(*original_malloc) (size_t size);
 //original_malloc = dlsym(RTLD_NEXT, "malloc");
 //void *ptr = original_malloc(17);
-/*
 
-*/
