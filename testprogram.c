@@ -13,6 +13,7 @@ int main(int argc, char * argv[])
 	//atoi is ASCII to integer
 	/*
 	int num_allocs = atoi(argv[1]);
+	int num_frees = atoi(argv[2]);
 	
 	//Just to produce a general leak
 	for(int i = 0; num_allocs >i; i++)
@@ -23,6 +24,7 @@ int main(int argc, char * argv[])
 	
 	void *a = malloc(128);
 	void *b = malloc(64);
+	void *c = malloc(32);
 	//void *c = calloc(1, sizeof(b));
 	//free(a);
 	//free(b);

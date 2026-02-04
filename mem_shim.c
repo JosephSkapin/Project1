@@ -41,8 +41,13 @@ __attribute__((constructor)) static void init(void)
 //freed during the course of the programs execution (via free or realloc)
 
 //implement these functions
-void free (void *ptr)
+
+//Is given a pointer to an address, so go through linked list and compare
+// the passed in pointer to the pointer stored in the linked list structure
+//Once found...free the pointer in the linked list
+void free(void *ptr)
 {
+	if(ptr ==NULL) return;
 	
 	
 	original_free(ptr);
@@ -131,4 +136,30 @@ void *realloc(void *ptr, size_t size)
 //void *(*original_malloc) (size_t size);
 //original_malloc = dlsym(RTLD_NEXT, "malloc");
 //void *ptr = original_malloc(17);
+
+
+void __attribute__((destructor)) leak_report()
+{
+	size_t leakSum = 0;
+	int leakCount = 0;
+	fprintf(stderr,"----Memory Leak Report----\n");
+	node_t *curr = head;
+	if(curr == NULL) fprintf(stderr,"No Leaks\n");
+		
+	while(curr != NULL)
+	{
+		
+		fprintf(stderr,"Leak: %zu \n",curr->size);
+		leakSum += curr->size;
+		leakCount++;
+		curr = curr->next;
+	}
+	
+	fprintf(stderr, "Leak Total: %d %zu \n",leakCount,leakSum);
+}
+
+
+
+
+
 
