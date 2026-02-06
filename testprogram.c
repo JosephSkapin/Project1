@@ -28,6 +28,7 @@ int main(int argc, char * argv[])
 	//void *c = calloc(1, sizeof(b));
 	//free(a);
 	//free(b);
+	//free(c);
 	
 	
 	

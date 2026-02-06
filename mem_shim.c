@@ -47,9 +47,26 @@ __attribute__((constructor)) static void init(void)
 //Once found...free the pointer in the linked list
 void free(void *ptr)
 {
-	if(ptr ==NULL) return;
+	if(ptr ==NULL || head == NULL) return;
+	node_t *curr =head;
+	node_t *prev = curr;
+	while(curr->ptr != ptr)
+	{
+		prev = curr;
+		curr = curr->next;
+	}
+	//re arrange list to things connect
+	if(curr == head)
+	{
+		head = curr->next;
+	}
+	else
+	{
+		prev->next = curr->next;
+	}
 	
 	
+	original_free(curr);
 	original_free(ptr);
 	
 	write(2,"free found\n",12);
@@ -137,25 +154,25 @@ void *realloc(void *ptr, size_t size)
 //original_malloc = dlsym(RTLD_NEXT, "malloc");
 //void *ptr = original_malloc(17);
 
-
+//destructor prints out our leak report
 void __attribute__((destructor)) leak_report()
 {
-	size_t leakSum = 0;
-	int leakCount = 0;
+	size_t leakSum = 0; //keeps track of total number of leaked bytes
+	int leakCount = 0; //Counts the number of memory leaks
 	fprintf(stderr,"----Memory Leak Report----\n");
-	node_t *curr = head;
-	if(curr == NULL) fprintf(stderr,"No Leaks\n");
+	node_t *curr = head; //starts at head of linked list
+	if(curr == NULL) fprintf(stderr,"No Leaks\n"); //if head is Null then there is no memory Leaks to report
 		
 	while(curr != NULL)
 	{
 		
-		fprintf(stderr,"Leak: %zu \n",curr->size);
+		fprintf(stderr,"LEAK\t%zu \n",curr->size);
 		leakSum += curr->size;
 		leakCount++;
 		curr = curr->next;
 	}
 	
-	fprintf(stderr, "Leak Total: %d %zu \n",leakCount,leakSum);
+	fprintf(stderr, "TOTAL\t%d\t%zu\n",leakCount,leakSum);
 }
 
 
