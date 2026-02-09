@@ -25,7 +25,8 @@ int main(int argc, char * argv[])
 	void *a = malloc(128);
 	void *b = malloc(64);
 	void *c = malloc(32);
-	//void *c = calloc(1, sizeof(b));
+	void *d = calloc(5, sizeof(b));
+	a = realloc(a,100);
 	//free(a);
 	//free(b);
 	//free(c);

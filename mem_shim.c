@@ -50,7 +50,7 @@ void free(void *ptr)
 	if(ptr ==NULL || head == NULL) return;
 	node_t *curr =head;
 	node_t *prev = curr;
-	while(curr->ptr != ptr)
+	while(curr != NULL && curr->ptr != ptr)
 	{
 		prev = curr;
 		curr = curr->next;
@@ -69,7 +69,7 @@ void free(void *ptr)
 	original_free(curr);
 	original_free(ptr);
 	
-	write(2,"free found\n",12);
+	//write(2,"free found\n",12);
 }
 
 
@@ -97,17 +97,17 @@ void *malloc(size_t size)
 		prev->next = newNode;
 	
 		newNode->next = NULL;
-		write(2,"Node Added\n",12);
+		//write(2,"Node Added\n",12);
 	}
 	else //Case for empty list
 	{
 		head = newNode;
-		write(2,"First Node Added\n",17);
+		//write(2,"First Node Added\n",17);
 	}
 	
 	
 	
-	write(2,"malloc found\n",14);
+	//write(2,"malloc found\n",14);
 	
 	
 	
@@ -123,15 +123,43 @@ void *malloc(size_t size)
 * memory allocation, same goes for calloc and realloc
 *
 *
-//Calloc takes 2 parameters, 1: the number of elements you want to allocate
-// 2. the size of each individual element in bytes	
+* Calloc takes 2 parameters, 
+* 1: the number of elements you want to allocate
+* 2. the size of each individual element in bytes	
 */		   
 void *calloc(size_t count, size_t size)
 {
+	void *ptr = original_calloc(count,size);
+	if(ptr == NULL) return NULL;
+	
+	node_t *newNode = (node_t*)original_calloc(1,sizeof(node_t));
+	newNode->ptr = ptr;
+	newNode->size = size*count;
+	
+	if(head != NULL)
+	{
+		node_t *curr = head; 
+		node_t *prev = curr;
+		// walk through linked list, curr finds the end, prev is the point where we insert next
+		while(curr != NULL) 
+		{
+			prev = curr;
+			curr = curr->next;
+		}
+	
+		prev->next = newNode;
+	
+		newNode->next = NULL;
+		//write(2,"Node Added\n",12);
+	}
+	else //Case for empty list
+	{
+		head = newNode;
+		//write(2,"First Node Added\n",17);
+	}
 	
 	
-	
-	write(2,"calloc found\n",14);
+	//write(2,"calloc found\n",14);
 	
 }					 
 
@@ -139,9 +167,80 @@ void *calloc(size_t count, size_t size)
 resized. This pointer must have previously been returned by malloc
 calloc or realloc.2nd parameter is the new size for the memory block in bytes
 The new size can be smaller or larger than the original.
-*/				
+*/	
+void remove_node(void*ptr);
+void remove_node(void *ptr)
+{
+	//searching through the list until either we hit the end or we find a match in ptrs
+	//then remove the node
+	if(ptr ==NULL || head == NULL) return;
+	node_t *curr =head;
+	node_t *prev = curr;
+	while(curr != NULL && curr->ptr != ptr)
+	{
+		prev = curr;
+		curr = curr->next;
+	}
+	//re arrange list to things connect
+	if(curr == head)
+	{
+		head = curr->next;
+	}
+	else
+	{
+		prev->next = curr->next;
+	}
+	
+	
+	original_free(curr);
+}
+
+			
 void *realloc(void *ptr, size_t size)
 {
+	//get rid of the old node then we will add a new node with the proper size
+	if(ptr != NULL)
+	{
+		remove_node(ptr);
+	}
+	
+	//
+	void *n_ptr = original_realloc(ptr,size);
+	
+	//now we add a node with the new information
+	node_t *newNode = (node_t*)original_malloc(sizeof(node_t));
+	newNode->ptr = n_ptr;
+	newNode->size = size;
+	
+	if(head != NULL)
+	{
+		node_t *curr = head; 
+		node_t *prev = curr;
+		// walk through linked list, curr finds the end, prev is the point where we insert next
+		while(curr != NULL) 
+		{
+			prev = curr;
+			curr = curr->next;
+		}
+	
+		prev->next = newNode;
+	
+		newNode->next = NULL;
+		//write(2,"Node Added\n",12);
+	}
+	else //Case for empty list
+	{
+		head = newNode;
+		//write(2,"First Node Added\n",17);
+	}
+	
+	
+	
+	//write(2,"realloc found\n",14);
+	
+	
+	
+	return ptr;
 	
 }
 					
@@ -159,7 +258,7 @@ void __attribute__((destructor)) leak_report()
 {
 	size_t leakSum = 0; //keeps track of total number of leaked bytes
 	int leakCount = 0; //Counts the number of memory leaks
-	fprintf(stderr,"----Memory Leak Report----\n");
+	//fprintf(stderr,"----Memory Leak Report----\n");
 	node_t *curr = head; //starts at head of linked list
 	if(curr == NULL) fprintf(stderr,"No Leaks\n"); //if head is Null then there is no memory Leaks to report
 		

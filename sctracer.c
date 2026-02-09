@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
 	pid_t child = fork();
 	if(child == 0)
 	{	
-	//Allow myself(the child) to be traced)
+	//Allow myself(the child) to be traced
 	ptrace(PTRACE_TRACEME);
 	
 	//Stop myself--allow the parent to get ready to trace me
@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 	
 	
 	//child process now is working in the testprogram
-	//execvp(cmd_args[0],cmd_args);
+	
 	execvp(argv[1],&argv[1]);
 	
 	perror("execvp failed");
@@ -76,10 +76,10 @@ int main(int argc, char *argv[])
 			}
 			
 			
-			//psi will be filled by the kernel with data about wether the process is entering or
+			//psi will be filled by the kernel with data about whether the process is entering or
 			//exiting a system call, which system call it is, and what the arguments are.
 			struct ptrace_syscall_info psi;
-			//tells the kernel to populate the structure with all relevant metadata about the
+			//tells the kernel to populate the structure with all relevant data about the
 			//current system call
 			ptrace(PTRACE_GET_SYSCALL_INFO,child,sizeof(struct ptrace_syscall_info), &psi);
 		
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
 		
 		
 		
-		printf("My child called system call #%d.\n",syscall_num);
+		
         
         	
         	//Tells kernel to resume the stopped child process and run until it exits or
@@ -123,6 +123,8 @@ int main(int argc, char *argv[])
         	
 	}
 	
+	
+	//Now dealing with writing the needed data to an output file.
 	FILE *f;
 	f = fopen(argv[2],"w"); // "w" specifies that we are writing to this file
 	if(f == NULL)
@@ -131,6 +133,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 	
+	//looping through the sysCount array and printing the data to the file.
 	for(int i = 0; i<500;i++)
 	{
 		if(sysCount[i]>0)
@@ -138,11 +141,11 @@ int main(int argc, char *argv[])
 			fprintf(f, "%d\t%d\n",i,sysCount[i]);
 		}
 	}
-	
+	//now done with the output file, close it.
 	fclose(f);
 	
 	
 	
 
-	
+	//end of program
 }
