@@ -47,6 +47,8 @@ __attribute__((constructor)) static void init(void)
 //Once found...free the pointer in the linked list
 void free(void *ptr)
 {
+	//if the head is null there isnt anything to free and if the passed in ptr is null then just return
+	
 	if(ptr ==NULL || head == NULL) return;
 	node_t *curr =head;
 	node_t *prev = curr;
@@ -56,17 +58,25 @@ void free(void *ptr)
 		curr = curr->next;
 	}
 	//re arrange list to things connect
-	if(curr == head)
+	if(curr !=NULL)
 	{
-		head = curr->next;
-	}
-	else
-	{
-		prev->next = curr->next;
+		if(curr == head)
+		{
+			head = curr->next;
+		}
+		else
+		{
+			prev->next = curr->next;
+		}
+		//free the node
+		original_free(curr);
+		
 	}
 	
 	
-	original_free(curr);
+	
+	
+	//free the pointer
 	original_free(ptr);
 	
 	//write(2,"free found\n",12);
@@ -76,43 +86,22 @@ void free(void *ptr)
 void *malloc(size_t size)
 {
 	
-	void *ptr = original_malloc(size);
-	if(ptr == NULL) return NULL;
+	void *u_ptr = original_malloc(size);
 	
+	
+	//allocate memory for a new node to be inserted
 	node_t *newNode = (node_t*)original_malloc(sizeof(node_t));
-	newNode->ptr = ptr;
-	newNode->size = size;
-	
-	if(head != NULL)
+	if(u_ptr) //checks if u_ptr is a non null pointer
 	{
-		node_t *curr = head; 
-		node_t *prev = curr;
-		// walk through linked list, curr finds the end, prev is the point where we insert next
-		while(curr != NULL) 
+		if(newNode)//checks if newNode is nonNull
 		{
-			prev = curr;
-			curr = curr->next;
+			newNode->ptr = u_ptr;
+			newNode->size = size;
+			newNode->next = head;
+			head = newNode;
 		}
-	
-		prev->next = newNode;
-	
-		newNode->next = NULL;
-		//write(2,"Node Added\n",12);
 	}
-	else //Case for empty list
-	{
-		head = newNode;
-		//write(2,"First Node Added\n",17);
-	}
-	
-	
-	
-	//write(2,"malloc found\n",14);
-	
-	
-	
-	return ptr;
-
+	return u_ptr;
 }
 
 //void return type
@@ -157,6 +146,7 @@ void *calloc(size_t count, size_t size)
 		head = newNode;
 		//write(2,"First Node Added\n",17);
 	}
+	return ptr;
 	
 	
 	//write(2,"calloc found\n",14);
@@ -176,26 +166,29 @@ void remove_node(void *ptr)
 	if(ptr ==NULL || head == NULL) return;
 	node_t *curr =head;
 	node_t *prev = curr;
-	while(curr != NULL && curr->ptr != ptr)
+	while(curr != NULL)
 	{
+		if(curr->ptr == ptr) //found
+		{
+			if(prev == NULL)
+			{
+				head = curr->next;
+			}
+			else
+			{
+				prev->next = curr->next;
+			}
+			
+			original_free(curr);
+			return;
+		}
 		prev = curr;
 		curr = curr->next;
 	}
-	//re arrange list to things connect
-	if(curr == head)
-	{
-		head = curr->next;
-	}
-	else
-	{
-		prev->next = curr->next;
-	}
 	
-	
-	original_free(curr);
 }
 
-			
+//will likely make a helper function called add_node that essentially does what the malloc function does			
 void *realloc(void *ptr, size_t size)
 {
 	//get rid of the old node then we will add a new node with the proper size
@@ -240,7 +233,7 @@ void *realloc(void *ptr, size_t size)
 	
 	
 	
-	return ptr;
+	return n_ptr;
 	
 }
 					
@@ -260,7 +253,7 @@ void __attribute__((destructor)) leak_report()
 	int leakCount = 0; //Counts the number of memory leaks
 	//fprintf(stderr,"----Memory Leak Report----\n");
 	node_t *curr = head; //starts at head of linked list
-	if(curr == NULL) fprintf(stderr,"No Leaks\n"); //if head is Null then there is no memory Leaks to report
+	//if(curr == NULL) fprintf(stderr,"No Leaks\n"); //if head is Null then there is no memory Leaks to report
 		
 	while(curr != NULL)
 	{

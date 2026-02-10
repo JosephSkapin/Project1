@@ -25,7 +25,9 @@
 */
 int main(int argc, char *argv[])
 {
+	//creating an array to keep track of sys calls
 	int sysCount[500] = {0};
+	//creating child process
 	pid_t child = fork();
 	if(child == 0)
 	{	
@@ -38,9 +40,10 @@ int main(int argc, char *argv[])
 	
 	
 	//child process now is working in the testprogram
-	
 	execvp(argv[1],&argv[1]);
 	
+	
+	//incase execvp fails
 	perror("execvp failed");
 	exit(1);
 	
@@ -115,10 +118,9 @@ int main(int argc, char *argv[])
 		
         
         	
-        	//Tells kernel to resume the stopped child process and run until it exits or
-        	//receives a signal
-        	ptrace(PTRACE_CONT, child, NULL, NULL);
+        	
         	//The parent process pauses and waits for the child to officially terminate.
+        	ptrace(PTRACE_CONT, child, NULL, NULL);
         	waitpid(child, NULL, 0);
         	
 	}
