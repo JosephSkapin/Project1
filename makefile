@@ -1,4 +1,4 @@
-BINS = leakcount mem_shim.so testprogram sctracer tracetest
+BINS = leakcount mem_shim.so sctracer 
 
 all: $(BINS)
 

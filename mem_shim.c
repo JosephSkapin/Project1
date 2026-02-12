@@ -16,15 +16,17 @@ typedef struct node {
 	
 }node_t;
 
+//setting up head and tail as global variables
+node_t *head = NULL;
+node_t *tail = NULL;
 
-static node_t *head = NULL;
 //Function prototypes to implement
 void *(*original_malloc)(size_t size);
 void  (*original_free)(void *);
 void *(*original_calloc)(size_t, size_t);
 void *(*original_realloc)(void *, size_t);
 
-//Sets up links to lib.c respective functions
+//Sets up links to lib.c functions before main()
 __attribute__((constructor)) static void init(void)
 {
 	
@@ -45,6 +47,7 @@ __attribute__((constructor)) static void init(void)
 //Is given a pointer to an address, so go through linked list and compare
 // the passed in pointer to the pointer stored in the linked list structure
 //Once found...free the pointer in the linked list
+
 void free(void *ptr)
 {
 	//if the head is null there isnt anything to free and if the passed in ptr is null then just return
@@ -63,10 +66,19 @@ void free(void *ptr)
 		if(curr == head)
 		{
 			head = curr->next;
+			if(head == NULL)
+			{
+				tail = NULL;
+			}
 		}
 		else
 		{
 			prev->next = curr->next;
+			
+			if(curr == tail)
+			{
+				tail = prev;
+			}
 		}
 		//free the node
 		original_free(curr);
@@ -82,7 +94,7 @@ void free(void *ptr)
 	//write(2,"free found\n",12);
 }
 
-
+//Implementation is inserting at the tail
 void *malloc(size_t size)
 {
 	
@@ -91,15 +103,19 @@ void *malloc(size_t size)
 	
 	//allocate memory for a new node to be inserted
 	node_t *newNode = (node_t*)original_malloc(sizeof(node_t));
-	if(u_ptr) //checks if u_ptr is a non null pointer
+	newNode->size = size;
+	newNode->ptr = u_ptr;
+	newNode->next = NULL;
+	
+	//case for the first ever node of the LL
+	if(head == NULL)
 	{
-		if(newNode)//checks if newNode is nonNull
-		{
-			newNode->ptr = u_ptr;
-			newNode->size = size;
-			newNode->next = head;
-			head = newNode;
-		}
+		head = newNode;
+		tail = newNode;
+	}
+	else{
+		tail->next = newNode;
+		tail = newNode;
 	}
 	return u_ptr;
 }
@@ -165,7 +181,7 @@ void remove_node(void *ptr)
 	//then remove the node
 	if(ptr ==NULL || head == NULL) return;
 	node_t *curr =head;
-	node_t *prev = curr;
+	node_t *prev = NULL;
 	while(curr != NULL)
 	{
 		if(curr->ptr == ptr) //found
@@ -186,79 +202,79 @@ void remove_node(void *ptr)
 		curr = curr->next;
 	}
 	
-}
-
-//will likely make a helper function called add_node that essentially does what the malloc function does			
+}		
 void *realloc(void *ptr, size_t size)
 {
 	//get rid of the old node then we will add a new node with the proper size
+	
+	void *n_ptr = original_realloc(ptr,size);
+	
+	if(n_ptr == NULL && size >0)
+	{
+		return NULL;
+	}
+	
 	if(ptr != NULL)
 	{
 		remove_node(ptr);
 	}
-	
-	//
-	void *n_ptr = original_realloc(ptr,size);
-	
 	//now we add a node with the new information
-	node_t *newNode = (node_t*)original_malloc(sizeof(node_t));
-	newNode->ptr = n_ptr;
-	newNode->size = size;
-	
-	if(head != NULL)
+	if(n_ptr != NULL && size >0)
 	{
-		node_t *curr = head; 
-		node_t *prev = curr;
-		// walk through linked list, curr finds the end, prev is the point where we insert next
-		while(curr != NULL) 
+		node_t *newNode = (node_t*)original_malloc(sizeof(node_t));
+		if(newNode == NULL) return n_ptr;
+		
+		newNode->ptr = n_ptr;
+		newNode->size = size;
+		newNode->next = NULL;
+	
+		if(head != NULL)
 		{
-			prev = curr;
-			curr = curr->next;
+			node_t *curr = head; 
+			
+			// walk through linked list
+			while(curr->next != NULL) 
+			{
+				//prev = curr;
+				curr = curr->next;
+			}
+	
+			curr->next = newNode;
+	
+			newNode->next = NULL;
+			//write(2,"Node Added\n",12);
+		}
+		else //Case for empty list
+		{
+			head = newNode;
+			//write(2,"First Node Added\n",17);
 		}
 	
-		prev->next = newNode;
 	
-		newNode->next = NULL;
-		//write(2,"Node Added\n",12);
+	
+		//write(2,"realloc found\n",14);
+	
+	
+	
+		
+	
 	}
-	else //Case for empty list
-	{
-		head = newNode;
-		//write(2,"First Node Added\n",17);
-	}
-	
-	
-	
-	//write(2,"realloc found\n",14);
-	
-	
-	
 	return n_ptr;
-	
 }
 					
-					
-			
-
-//How to call the original version of malloc
-//#include <dlfcn.h>
-//void *(*original_malloc) (size_t size);
-//original_malloc = dlsym(RTLD_NEXT, "malloc");
-//void *ptr = original_malloc(17);
-
 //destructor prints out our leak report
 void __attribute__((destructor)) leak_report()
 {
 	size_t leakSum = 0; //keeps track of total number of leaked bytes
 	int leakCount = 0; //Counts the number of memory leaks
-	//fprintf(stderr,"----Memory Leak Report----\n");
+	
 	node_t *curr = head; //starts at head of linked list
-	//if(curr == NULL) fprintf(stderr,"No Leaks\n"); //if head is Null then there is no memory Leaks to report
-		
+	
+	//loop through linked list printing from the first node onwards. Doing a count/sum aswell for the total portion
 	while(curr != NULL)
 	{
 		
-		fprintf(stderr,"LEAK\t%zu \n",curr->size);
+		fprintf(stderr,"LEAK\t%zu\n",curr->size);
 		leakSum += curr->size;
 		leakCount++;
 		curr = curr->next;

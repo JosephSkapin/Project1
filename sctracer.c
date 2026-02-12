@@ -32,14 +32,16 @@ int main(int argc, char *argv[])
 	if(child == 0)
 	{	
 	//Allow myself(the child) to be traced
-	ptrace(PTRACE_TRACEME);
+	ptrace(PTRACE_TRACEME); 
 	
 	//Stop myself--allow the parent to get ready to trace me
 	kill(getpid(),SIGSTOP);
 	
 	
 	
+	
 	//child process now is working in the testprogram
+	
 	execvp(argv[1],&argv[1]);
 	
 	
@@ -78,6 +80,8 @@ int main(int argc, char *argv[])
 				break;
 			}
 			
+			if(WIFSTOPPED(status) && WSTOPSIG(status) == (SIGTRAP | 0x80))
+			{
 			
 			//psi will be filled by the kernel with data about whether the process is entering or
 			//exiting a system call, which system call it is, and what the arguments are.
@@ -111,16 +115,11 @@ int main(int argc, char *argv[])
 			//wait until the process is stopped or bit 7 is set in
 			//the status 
 			//checks if child is in a stopped state
-		}while(!(WIFSTOPPED(status) && WSTOPSIG(status & 0x80)));
+			}
+		}while(!WIFEXITED(status));
 		
-		
-		
-		
-        
-        	
-        	
         	//The parent process pauses and waits for the child to officially terminate.
-        	ptrace(PTRACE_CONT, child, NULL, NULL);
+        	//ptrace(PTRACE_CONT, child, NULL, NULL);
         	waitpid(child, NULL, 0);
         	
 	}
